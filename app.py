@@ -1,5 +1,6 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, url_for
 from equipment import Equipment
+from classes import unit_classes
 app = Flask(__name__)
 
 # heroes = {
@@ -15,11 +16,13 @@ def menu_page():
     return render_template('index.html')
 
 
-# @app.route("/fight/")
-# def start_fight():
-#     # TODO выполняем функцию start_game экземпляра класса арена и передаем ему необходимые аргументы
-#     # TODO рендерим экран боя (шаблон fight.html)
-#     pass
+@app.route("/fight/")
+def start_fight():
+    # TODO выполняем функцию start_game экземпляра класса арена и передаем ему необходимые аргументы
+    # TODO рендерим экран боя (шаблон fight.html)
+
+    return render_template('fight.html')
+
 #
 # @app.route("/fight/hit")
 # def hit():
@@ -58,16 +61,29 @@ def choose_hero():
     # TODO на POST отправляем форму и делаем редирект на эндпоинт choose enemy
     if request.method == 'GET':
         result = Equipment()._get_equipment_data()
-        return render_template('hero_choosing.html', result=result)
-#
-#
-# @app.route("/choose-enemy/", methods=['post', 'get'])
-# def choose_enemy():
-#     # TODO кнопка выбор соперников. 2 метода GET и POST
-#     # TODO также на GET отрисовываем форму.
-#     # TODO а на POST отправляем форму и делаем редирект на начало битвы
-#     pass
+        u_classes = unit_classes
+        # print(type(u_classes['Вор']))
+        # print(u_classes['Вор'])
+        return render_template('hero_choosing.html', result=result, unit_classes=u_classes)
+    if request.method == 'POST':
+        print(request.form['unit_class'])
+        print(request.form['weapon'])
 
+        return redirect(url_for('choose_enemy'))
+
+
+@app.route("/choose_enemy", methods=['post', 'get'])
+def choose_enemy():
+    # TODO кнопка выбор соперников. 2 метода GET и POST
+    # TODO также на GET отрисовываем форму.
+    # TODO а на POST отправляем форму и делаем редирект на начало битвы
+    if request.method == 'GET':
+        result = Equipment()._get_equipment_data()
+        classes = unit_classes
+        return render_template('enemy_choosing.html', result=result, classes=classes)
+    if request.method == 'POST':
+
+        return redirect(url_for('start_fight'))
 
 if __name__ == "__main__":
     app.run()

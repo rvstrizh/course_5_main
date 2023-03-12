@@ -69,8 +69,8 @@ class Equipment:
         except marshmallow.exceptions.ValidationError:
             raise ValueError
 
-eq = Equipment()
-print(eq._get_equipment_data())
-
-# @dataclass
+# eq = Equipment()
+#
+# print(type(eq._get_equipment_data()))
+# # @dataclass
 # class WarriorClass(Armor, Weapons):
