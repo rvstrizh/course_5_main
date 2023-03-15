@@ -1,8 +1,8 @@
 from __future__ import annotations
 from abc import ABC, abstractmethod
 from equipment import Equipment, Weapon, Armor
-from classes import UnitClass
-from random import randint
+from classes import UnitClass, ThiefClass
+from random import uniform
 from typing import Optional
 
 
@@ -10,32 +10,35 @@ class BaseUnit(ABC):
     """
     Базовый класс юнита
     """
-    def __init__(self, name: str, unit_class: UnitClass):
+    def __init__(self, name: str, unit_class: UnitClass, weapon: Weapon, armor: Armor):
         """
         При инициализации класса Unit используем свойства класса UnitClass
         """
-        self.name = unit_class.name
+        self.name = name
         self.unit_class = unit_class
         self.hp = unit_class.max_health
         self.stamina = unit_class.max_stamina
-        self.weapon = unit_class.attack
-        self.armor = unit_class.armor
+        self.weapon = weapon
+        self.armor = armor
         self._is_skill_used = unit_class.skill
 
     @property
     def health_points(self):
-        return # TODO возвращаем аттрибут hp в красивом виде
+        # TODO возвращаем аттрибут hp в красивом виде
+        return self.hp
 
     @property
     def stamina_points(self):
-        return  # TODO возвращаем аттрибут hp в красивом виде
+        return self.stamina
 
     def equip_weapon(self, weapon: Weapon):
         # TODO присваиваем нашему герою новое оружие
+        self.weapon = weapon
         return f"{self.name} экипирован оружием {self.weapon.name}"
 
     def equip_armor(self, armor: Armor):
         # TODO одеваем новую броню
+        self.armor = armor
         return f"{self.name} экипирован броней {self.weapon.name}"
 
     def _count_damage(self, target: BaseUnit) -> int:
@@ -47,12 +50,22 @@ class BaseUnit(ABC):
         #  если у защищающегося нехватает выносливости - его броня игнорируется
         #  после всех расчетов цель получает урон - target.get_damage(damage)
         #  и возвращаем предполагаемый урон для последующего вывода пользователю в текстовом виде
-        return damage
+        if self.weapon.stamina_per_hit < self.stamina:
+            self.stamina = round((self.stamina - self.weapon.stamina_per_hit) * self.unit_class.stamina + 1, 1)
+            if target.stamina > target.armor.stamina_per_turn:
+                target.stamina = round((target.stamina - target.armor.stamina_per_turn) * target.unit_class.stamina + 1, 1)
+                damage = round(uniform(self.weapon.min_damage, self.weapon.max_damage) * self.unit_class.attack, 1)
+        else:
+            return 'not_stamina'
+
+        return target.get_damage(damage)
 
     def get_damage(self, damage: int) -> Optional[int]:
         # TODO получение урона целью
         #      присваиваем новое значение для аттрибута self.hp
-        pass
+
+        self.hp = round(self.hp - damage + self.armor.defence, 1)
+        return damage - self.armor.defence
 
     @abstractmethod
     def hit(self, target: BaseUnit) -> str:
@@ -82,11 +95,15 @@ class PlayerUnit(BaseUnit):
         вызывается функция self._count_damage(target)
         а также возвращается результат в виде строки
         """
-        pass
-        # TODO результат функции должен возвращать следующие строки:
-        f"{self.name} используя {self.weapon.name} пробивает {target.armor.name} соперника и наносит {damage} урона."
-        f"{self.name} используя {self.weapon.name} наносит удар, но {target.armor.name} cоперника его останавливает."
-        f"{self.name} попытался использовать {self.weapon.name}, но у него не хватило выносливости."
+        damage = self._count_damage(target)
+        try:
+            if damage > 0:
+                return f"{self.name} используя {self.weapon.name} пробивает {target.armor.name} соперника и наносит {round(damage, 1)} урона."
+            elif damage == 0:
+                print(damage)
+                return f"{self.name} используя {self.weapon.name} наносит удар, но {target.armor.name} cоперника его останавливает."
+        except TypeError:
+            return f"{self.name} попытался использовать {self.weapon.name}, но у него не хватило выносливости."
 
 class EnemyUnit(BaseUnit):
 

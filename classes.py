@@ -34,6 +34,6 @@ class ThiefClass(UnitClass): # = ... # TODO действуем так же ка�
 
 
 unit_classes = {
-    ThiefClass.name: ThiefClass(),
-    WarriorClass.name: WarriorClass()
+    ThiefClass.name: ThiefClass,
+    WarriorClass.name: WarriorClass
 }

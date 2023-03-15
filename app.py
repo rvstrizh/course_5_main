@@ -1,14 +1,16 @@
 from flask import Flask, render_template, request, redirect, url_for
-from equipment import Equipment
+from equipment import result
 from classes import unit_classes
+from unit import PlayerUnit, EnemyUnit
+from base import Arena
 app = Flask(__name__)
 
-# heroes = {
-#     "player": BaseUnit,
-#     "enemy": BaseUnit
-# }
+heroes = {
+    "player": None,
+    "enemy": None
+} # этот словарь самый главный в него я помещаю все что ввожу
 #
-# arena =  ... # TODO инициализируем класс арены
+arena = Arena()  # TODO инициализируем класс арены
 
 
 @app.route("/")
@@ -16,21 +18,29 @@ def menu_page():
     return render_template('index.html')
 
 
-@app.route("/fight/")
+@app.route("/fight/", methods=['GET', 'POST'])
 def start_fight():
     # TODO выполняем функцию start_game экземпляра класса арена и передаем ему необходимые аргументы
     # TODO рендерим экран боя (шаблон fight.html)
+    if request.method == 'GET':
+        return render_template('fight.html', heroes=arena)
 
-    return render_template('fight.html')
 
-#
-# @app.route("/fight/hit")
-# def hit():
-#     # TODO кнопка нанесения удара
-#     # TODO обновляем экран боя (нанесение удара) (шаблон fight.html)
-#     # TODO если игра идет - вызываем метод player.hit() экземпляра класса арены
-#     # TODO если игра не идет - пропускаем срабатывание метода (простот рендерим шаблон с текущими данными)
-#     pass
+
+@app.route("/fight/hit")
+def hit():
+    # TODO кнопка нанесения удара
+    # TODO обновляем экран боя (нанесение удара) (шаблон fight.html)
+    # TODO если игра идет - вызываем метод player.hit() экземпляра класса арены
+    # TODO если игра не идет - пропускаем срабатывание метода (простот рендерим шаблон с текущими данными)
+    # weapon = result['weapons']["топорик"]
+    # armor = result['armors']["кожаная броня"]
+    # heroes['player'] = PlayerUnit("Игрок 1", unit_classes["Вор"], weapon, armor)
+    # heroes['enemy'] = EnemyUnit("Игрок 2", unit_classes["Воин"], weapon, armor)
+    # arena.start_game(heroes['player'], heroes['enemy'])
+    r = arena.next_turn()
+
+    return render_template('fight.html', heroes=arena, result=r)
 #
 #
 # @app.route("/fight/use-skill")
@@ -60,15 +70,13 @@ def choose_hero():
     # TODO на GET отрисовываем форму.
     # TODO на POST отправляем форму и делаем редирект на эндпоинт choose enemy
     if request.method == 'GET':
-        result = Equipment()._get_equipment_data()
-        u_classes = unit_classes
-        # print(type(u_classes['Вор']))
-        # print(u_classes['Вор'])
-        return render_template('hero_choosing.html', result=result, unit_classes=u_classes)
+        return render_template('hero_choosing.html', result=result, u_classes=unit_classes)
     if request.method == 'POST':
-        print(request.form['unit_class'])
-        print(request.form['weapon'])
-
+        name = request.form['name']
+        unit_class = request.form['unit_class']
+        weapon = result['weapons'][request.form['weapon']]
+        armor = result['armors'][request.form['armor']]
+        heroes['player'] = PlayerUnit(name, unit_classes[unit_class], weapon, armor)
         return redirect(url_for('choose_enemy'))
 
 
@@ -78,11 +86,14 @@ def choose_enemy():
     # TODO также на GET отрисовываем форму.
     # TODO а на POST отправляем форму и делаем редирект на начало битвы
     if request.method == 'GET':
-        result = Equipment()._get_equipment_data()
-        classes = unit_classes
-        return render_template('enemy_choosing.html', result=result, classes=classes)
+        return render_template('enemy_choosing.html', result=result, u_classes=unit_classes)
     if request.method == 'POST':
-
+        name = request.form['name']
+        unit_class = request.form['unit_class']
+        weapon = result['weapons'][request.form['weapon']]
+        armor = result['armors'][request.form['armor']]
+        heroes['enemy'] = EnemyUnit(name, unit_classes[unit_class], weapon, armor)
+        arena.start_game(heroes['player'], heroes['enemy'])
         return redirect(url_for('start_fight'))
 
 if __name__ == "__main__":
