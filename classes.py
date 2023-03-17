@@ -16,7 +16,7 @@ class UnitClass:
 class WarriorClass(UnitClass): # =  ... # TODO Инициализируем экземпляр класса UnitClass и присваиваем ему необходимые значения аттрибуотов
     name: str = 'Воин'
     max_health: float = 60
-    max_stamina: float = 30
+    max_stamina: float = 50
     attack: float = 1.1
     stamina: float = 0.9
     armor: float = 1

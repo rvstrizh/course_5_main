@@ -51,21 +51,24 @@ class BaseUnit(ABC):
         #  после всех расчетов цель получает урон - target.get_damage(damage)
         #  и возвращаем предполагаемый урон для последующего вывода пользователю в текстовом виде
         if self.weapon.stamina_per_hit < self.stamina:
-            self.stamina = round((self.stamina - self.weapon.stamina_per_hit) * self.unit_class.stamina + 1, 1)
+            self.stamina = round((self.stamina - self.weapon.stamina_per_hit) * self.unit_class.stamina, 1)
             if target.stamina > target.armor.stamina_per_turn:
-                target.stamina = round((target.stamina - target.armor.stamina_per_turn) * target.unit_class.stamina + 1, 1)
-                damage = round(uniform(self.weapon.min_damage, self.weapon.max_damage) * self.unit_class.attack, 1)
+                target.stamina = round((target.stamina - target.armor.stamina_per_turn) * target.unit_class.stamina, 1)
+                armor = target.armor.defence
+            else:
+                armor = 0
+            damage = round(uniform(self.weapon.min_damage, self.weapon.max_damage) * self.unit_class.attack, 1)
         else:
             return 'not_stamina'
 
-        return target.get_damage(damage)
+        return target.get_damage(damage, armor)
 
-    def get_damage(self, damage: int) -> Optional[int]:
+    def get_damage(self, damage: int, armor: int) -> Optional[int]:
         # TODO получение урона целью
         #      присваиваем новое значение для аттрибута self.hp
 
-        self.hp = round(self.hp - damage + self.armor.defence, 1)
-        return damage - self.armor.defence
+        self.hp = round(self.hp - damage + armor, 1)
+        return round(damage - armor, 1)
 
     @abstractmethod
     def hit(self, target: BaseUnit) -> str:
@@ -83,7 +86,11 @@ class BaseUnit(ABC):
         self.unit_class.skill.use(user=self, target=target)
         и уже эта функция вернем нам строку которая характеризует выполнение умения
         """
-        pass
+        return self.unit_class.skill.use(self, user=self, target=target)
+
+    @property
+    def is_skill_used(self):
+        return self._is_skill_used
 
 
 class PlayerUnit(BaseUnit):
@@ -100,7 +107,6 @@ class PlayerUnit(BaseUnit):
             if damage > 0:
                 return f"{self.name} используя {self.weapon.name} пробивает {target.armor.name} соперника и наносит {round(damage, 1)} урона."
             elif damage == 0:
-                print(damage)
                 return f"{self.name} используя {self.weapon.name} наносит удар, но {target.armor.name} cоперника его останавливает."
         except TypeError:
             return f"{self.name} попытался использовать {self.weapon.name}, но у него не хватило выносливости."
@@ -116,9 +122,16 @@ class EnemyUnit(BaseUnit):
         Если умение не применено, противник наносит простой удар, где также используется
         функция _count_damage(target
         """
+        damage = self._count_damage(target)
+        try:
+            if damage > 0:
+                return f"{self.name} используя {self.weapon.name} пробивает {target.armor.name} и наносит Вам {damage} урона."
+            elif damage == 0:
+                return f"{self.name} используя {self.weapon.name} наносит удар, но Ваш(а) {target.armor.name} его останавливает."
+        except TypeError:
+            return f"{self.name} попытался использовать {self.weapon.name}, но у него не хватило выносливости."
         # TODO результат функции должен возвращать результат функции skill.use или же следующие строки:
-        f"{self.name} используя {self.weapon.name} пробивает {target.armor.name} и наносит Вам {damage} урона."
-        f"{self.name} используя {self.weapon.name} наносит удар, но Ваш(а) {target.armor.name} его останавливает."
-        f"{self.name} попытался использовать {self.weapon.name}, но у него не хватило выносливости."
+
+
 
 

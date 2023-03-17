@@ -3,6 +3,7 @@ from equipment import result
 from classes import unit_classes
 from unit import PlayerUnit, EnemyUnit
 from base import Arena
+
 app = Flask(__name__)
 
 heroes = {
@@ -23,6 +24,7 @@ def start_fight():
     # TODO выполняем функцию start_game экземпляра класса арена и передаем ему необходимые аргументы
     # TODO рендерим экран боя (шаблон fight.html)
     if request.method == 'GET':
+        arena.start_game(heroes['player'], heroes['enemy'])
         return render_template('fight.html', heroes=arena)
 
 
@@ -33,37 +35,46 @@ def hit():
     # TODO обновляем экран боя (нанесение удара) (шаблон fight.html)
     # TODO если игра идет - вызываем метод player.hit() экземпляра класса арены
     # TODO если игра не идет - пропускаем срабатывание метода (простот рендерим шаблон с текущими данными)
-    # weapon = result['weapons']["топорик"]
-    # armor = result['armors']["кожаная броня"]
-    # heroes['player'] = PlayerUnit("Игрок 1", unit_classes["Вор"], weapon, armor)
-    # heroes['enemy'] = EnemyUnit("Игрок 2", unit_classes["Воин"], weapon, armor)
+    # weapon1 = result['weapons']["топорик"]
+    # armor1 = result['armors']["кожаная броня"]
+    # weapon = result['weapons']["ножик"]
+    # armor = result['armors']["панцирь"]
+    # heroes['player'] = PlayerUnit("Игрок 1", unit_classes["Воин"], weapon1, armor1)
+    # heroes['enemy'] = EnemyUnit("Игрок 2", unit_classes["Вор"], weapon, armor)
     # arena.start_game(heroes['player'], heroes['enemy'])
-    r = arena.next_turn()
 
-    return render_template('fight.html', heroes=arena, result=r)
-#
-#
-# @app.route("/fight/use-skill")
-# def use_skill():
-#     # TODO кнопка использования скилла
-#     # TODO логика пркатикчески идентична предыдущему эндпоинту
-#     pass
-#
-#
-# @app.route("/fight/pass-turn")
-# def pass_turn():
-#     # TODO кнопка пропус хода
-#     # TODO логика пркатикчески идентична предыдущему эндпоинту
-#     # TODO однако вызываем здесь функцию следующий ход (arena.next_turn())
-#     pass
-#
-#
-# @app.route("/fight/end-fight")
-# def end_fight():
-#     # TODO кнопка завершить игру - переход в главное меню
-#     return render_template("index.html", heroes=heroes)
-#
-#
+    r = arena.player_hit()
+
+    arena._stamina_regeneration()
+    print(r)
+    return render_template('fight.html', heroes=arena, result=r[0], battle_result=r[1])
+
+
+@app.route("/fight/use-skill")
+def use_skill():
+    # TODO кнопка использования скилла
+    # TODO логика пркатикчески идентична предыдущему эндпоинту
+    r = arena.player_use_skill()
+    arena._stamina_regeneration()
+    return render_template('fight.html', heroes=arena, result=r[0], battle_result=r[1])
+
+
+@app.route("/fight/pass-turn")
+def pass_turn():
+    # TODO кнопка пропус хода
+    # TODO логика пркатикчески идентична предыдущему эндпоинту
+    # TODO однако вызываем здесь функцию следующий ход (arena.next_turn())
+    r = arena.next_turn()
+    return render_template('fight.html', heroes=arena, battle_result=r)
+
+
+@app.route("/fight/end-fight")
+def end_fight():
+    # TODO кнопка завершить игру - переход в главное меню
+    arena._end_game()
+    return render_template("index.html", heroes=heroes)
+
+
 @app.route("/choose-hero/", methods=['post', 'get'])
 def choose_hero():
     # TODO кнопка выбор героя. 2 метода GET и POST

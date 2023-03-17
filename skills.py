@@ -32,7 +32,7 @@ class Skill(ABC):
         pass
 
     def _is_stamina_enough(self):
-        return self.user.stamina > self.stamina
+        return self.user.stamina > self.user.is_skill_used.stamina
 
     def use(self, user: BaseUnit, target: BaseUnit) -> str:
         """
@@ -41,15 +41,21 @@ class Skill(ABC):
         """
         self.user = user
         self.target = target
-        if self._is_stamina_enough:
-            return self.skill_effect()
-        return f"{self.user.name} попытался использовать {self.name} но у него не хватило выносливости."
+        if not self.user.is_skill_used.used:
+            if self.user.is_skill_used._is_stamina_enough(self):
+                self.user.is_skill_used.used = True
+                return self.user.is_skill_used.skill_effect(self)
+            return f"{self.user.name} попытался использовать {self.user.is_skill_used.name} но у него не хватило выносливости."
+        else:
+
+            return f"{self.user.name} не может использовать {self.user.is_skill_used.name} т.к. уже его использовал"
 
 
 class FuryPunch(Skill):
     name = 'Яростный удар'
     stamina = 10
     damage = 20
+    used = False
 
     def skill_effect(self):
         # TODO логика использования скилла -> return str
@@ -57,18 +63,20 @@ class FuryPunch(Skill):
         # TODO именно здесь происходит уменшение стамины у игрока применяющего умение и
         # TODO уменьшение здоровья цели.
         # TODO результат применения возвращаем строкой
-        self.user.stamina -= self.stamina
-        self.target.hp -= self.damage
-        return f"{self.user.name} ненес {self.name} {self.target.name}y"
+
+        self.user.stamina = round(self.user.stamina - self.stamina, 1)
+        self.target.hp = round(self.target.hp - self.user.is_skill_used.damage, 1)
+        return f"{self.user.name} ненес {self.user.is_skill_used.name} мощностью {self.user.is_skill_used.damage} врагу {self.target.name}"
 
 
 class HardShot(Skill):
     name = 'Жестокий выстрел'
-    stamina = 10
+    stamina = 16
     damage = 20
+    used = False
 
     def skill_effect(self):
-        self.target.stamina -= self.stamina
-        self.user.hp -= self.damage
-        return f"{self.target.name} ненес {self.name} {self.user.name}y"
+        self.user.stamina = round(self.user.stamina - self.stamina, 1)
+        self.target.hp = round(self.target.hp - self.user.is_skill_used.damage, 1)
+        return f"{self.user.name} нанес {self.user.is_skill_used.name} мощностью {self.user.is_skill_used.damage} врагу {self.target.name}"
 
